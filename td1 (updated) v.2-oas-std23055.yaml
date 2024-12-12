@@ -1,0 +1,264 @@
+openapi: 3.0.0
+info:
+  title: Student Course Management API
+  description: API for managing student groups and students in a course system.
+  version: 1.1.0
+
+servers:
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/HEITIAVINA3/StudentCourseManagementAPI/1.1.0
+
+paths:
+  /groups:
+    get:
+      summary: Retrieve a list of groups
+      description: Get all groups, with optional filters by group name and year range.
+      parameters:
+        - name: groupName
+          in: query
+          description: Filter groups by name
+          required: false
+          schema:
+            type: string
+        - name: startYear
+          in: query
+          description: Filter groups created after this year (inclusive)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endYear
+          in: query
+          description: Filter groups created before this year (inclusive)
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: A list of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+    post:
+      summary: Add a new group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroup'
+      responses:
+        '201':
+          description: Group successfully created
+
+  /groups/{groupId}:
+    put:
+      summary: Update an existing group
+      description: Idempotent operation to update a group.
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '200':
+          description: Group successfully updated
+
+    delete:
+      summary: Delete a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Group successfully deleted
+
+  /students:
+    get:
+      summary: Retrieve a list of students
+      description: Get all students, with optional filters by student name.
+      parameters:
+        - name: studentName
+          in: query
+          description: Filter students by name
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Student'
+    post:
+      summary: Add a new student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStudent'
+      responses:
+        '201':
+          description: Student successfully created
+
+  /students/{studentId}:
+    put:
+      summary: Update an existing student
+      description: Idempotent operation to update a student.
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Student'
+      responses:
+        '200':
+          description: Student successfully updated
+
+    delete:
+      summary: Delete a student
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Student successfully deleted
+
+  /students/{studentId}/group:
+    put:
+      summary: Update the group of a student
+      description: Assign a student to a new group.
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '200':
+          description: Student successfully updated
+
+  /students/group:
+    put:
+      summary: Update the group of multiple students
+      description: Assign multiple students to a new group.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group:
+                  $ref: '#/components/schemas/Group'
+                studentIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: List of students successfully updated
+
+components:
+  schemas:
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the group
+        groupName:
+          type: string
+        groupYear:
+          type: string
+          format: date
+          description: Year the group was created
+        promotion:
+          type: string
+          enum:
+            - G
+            - H
+            - J
+            - K
+        studentNb:
+          type: integer
+          description: Number of students in the group
+        students:
+          type: array
+          items:
+            $ref: '#/components/schemas/Student'
+
+    Student:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the student
+        name:
+          type: string
+        sex:
+          type: string
+          enum:
+            - M
+            - F
+        birthdate:
+          type: string
+          format: date
+        reference:
+          type: string
+          description: Unique student reference (e.g., STD23XXX)
+        group:
+          $ref: '#/components/schemas/Group'
+
+    CreateGroup:
+      allOf:
+        - $ref: '#/components/schemas/Group'
+        - type: object
+          required:
+            - groupName
+            - groupYear
+            - promotion
+
+    CreateStudent:
+      allOf:
+        - $ref: '#/components/schemas/Student'
+        - type: object
+          required:
+            - name
+            - sex
+            - birthdate
+            - reference
+            - group
